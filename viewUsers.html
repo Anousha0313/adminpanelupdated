@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Users</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#1a1a2e;
+color:white;
+padding:20px;
+}
+
+.card{
+background:#2A2A3E;
+padding:15px;
+border-radius:10px;
+margin-bottom:10px;
+}
+
+button{
+padding:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin-top:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Registered Users</h2>
+
+<div id="userList"></div>
+
+<button onclick="goBack()">Back to Admin</button>
+
+<script>
+
+const firebaseConfig = {
+apiKey: "AIzaSyC7-qD6CyO0lPzZA3JL0O4w9M5Hltprl54",
+authDomain: "newgym-b6b87.firebaseapp.com",
+projectId: "newgym-b6b87",
+storageBucket: "newgym-b6b87.firebasestorage.app",
+messagingSenderId: "760039903820",
+appId: "1:760039903820:web:d29f2c7afbdd6fac6a5ae9"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function loadUsers(){
+
+db.collection("users").get().then((snapshot)=>{
+
+let html="";
+
+snapshot.forEach((doc)=>{
+
+let data = doc.data();
+
+html += `
+<div class="card">
+<p><b>Name:</b> ${data.name}</p>
+<p><b>Email:</b> ${data.email}</p>
+</div>
+`;
+
+});
+
+document.getElementById("userList").innerHTML = html;
+
+});
+
+}
+
+loadUsers();
+
+function goBack(){
+window.location.href="index.html";
+}
+
+</script>
+
+</body>
+</html>

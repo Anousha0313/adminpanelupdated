@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<style>
+
+body{
+font-family: Arial;
+margin:0;
+background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+}
+
+.header{
+padding:25px;
+font-size:26px;
+font-weight:bold;
+text-align:center;
+}
+
+.badge{
+display:inline-block;
+background:#e74c3c;
+color:white;
+border-radius:50%;
+padding:2px 8px;
+font-size:13px;
+font-weight:bold;
+margin-left:8px;
+vertical-align:middle;
+}
+
+.container{
+background:#1c1f2b;
+border-radius:30px 30px 0 0;
+padding:40px;
+min-height:100vh;
+box-shadow:0 -10px 30px rgba(0,0,0,0.4);
+}
+
+button{
+width:100%;
+padding:16px;
+margin-top:20px;
+font-size:16px;
+border:none;
+border-radius:12px;
+color:white;
+cursor:pointer;
+font-weight:bold;
+transition:0.3s;
+}
+
+button:hover{
+transform:translateY(-2px);
+opacity:0.9;
+}
+
+.users{
+background:linear-gradient(135deg,#36d1dc,#5b86e5);
+}
+
+.trainers{
+background:linear-gradient(135deg,#11998e,#38ef7d);
+}
+
+.add{
+background:linear-gradient(135deg,#ff7e5f,#feb47b);
+}
+
+.pending{
+background:linear-gradient(135deg,#f7971e,#ffd200);
+color:#1a1a1a;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+border-radius:8px;
+border:none;
+outline:none;
+box-sizing:border-box;
+}
+
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+z-index:10;
+}
+
+.modal-content{
+background:#242736;
+padding:25px;
+margin:10% auto;
+width:320px;
+border-radius:12px;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
+}
+
+.modal-content h3{
+margin-top:0;
+text-align:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  Admin Dashboard
+</div>
+
+<div class="container">
+
+  <button class="users" onclick="viewUsers()">View Users</button>
+
+  <button class="trainers" onclick="viewTrainers()">View Trainers</button>
+
+  <button class="pending" onclick="viewPending()">
+    Pending Trainer Requests <span class="badge" id="pendingCount">0</span>
+  </button>
+
+  <button class="add" onclick="openModal()"> Add Trainer Manually</button>
+
+</div>
+
+<!-- Add Trainer Modal -->
+<div class="modal" id="trainerModal">
+  <div class="modal-content">
+    <h3>Add Trainer</h3>
+    <input id="name" placeholder="Trainer Name">
+    <input id="gym" placeholder="Gym Name">
+    <input id="videoTitle" placeholder="Exercise Title">
+    <input id="videoUrl" placeholder="YouTube Video URL">
+    <br><br>
+    <button onclick="addTrainer()">Add Trainer</button>
+    <button onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC7-qD6CyO0lPzZA3JL0O4w9M5Hltprl54",
+  authDomain: "newgym-b6b87.firebaseapp.com",
+  projectId: "newgym-b6b87",
+  storageBucket: "newgym-b6b87.firebasestorage.app",
+  messagingSenderId: "760039903820",
+  appId: "1:760039903820:web:d29f2c7afbdd6fac6a5ae9"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Load pending count badge
+function loadPendingCount(){
+  db.collection("trainerRequests").where("status","==","pending").get().then((snap)=>{
+    const count = snap.size;
+    const badge = document.getElementById("pendingCount");
+    badge.textContent = count;
+    badge.style.display = count > 0 ? "inline-block" : "none";
+  });
+}
+
+loadPendingCount();
+
+function openModal(){
+  document.getElementById("trainerModal").style.display="block";
+}
+
+function closeModal(){
+  document.getElementById("trainerModal").style.display="none";
+}
+
+function addTrainer(){
+  let name=document.getElementById("name").value;
+  let gym=document.getElementById("gym").value;
+  let videoTitle=document.getElementById("videoTitle").value;
+  let videoUrl=document.getElementById("videoUrl").value;
+
+  if(name=="" || gym==""){
+    alert("Please fill trainer details");
+    return;
+  }
+
+  db.collection("trainers").add({
+    name:name,
+    gymName:gym,
+    createdAt:new Date()
+  }).then((docRef)=>{
+    if(videoTitle!="" && videoUrl!=""){
+      db.collection("trainers").doc(docRef.id).collection("exercises").add({
+        title:videoTitle,
+        videoUrl:videoUrl
+      });
+    }
+    alert("Trainer Added Successfully");
+    closeModal();
+  }).catch((error)=>{
+    console.error("Error:", error);
+  });
+}
+
+function viewUsers(){
+  window.location.href="viewUsers.html";
+}
+
+function viewTrainers(){
+  window.location.href="viewTrainers.html";
+}
+
+function viewPending(){
+  window.location.href="Pendingrequests.html";
+}
+
+</script>
+
+</body>
+</html>

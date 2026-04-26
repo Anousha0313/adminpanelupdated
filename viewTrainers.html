@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Trainers</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#1a1a2e;
+color:white;
+padding:20px;
+}
+
+.container{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+}
+
+.card{
+background:#2A2A3E;
+padding:20px;
+border-radius:12px;
+}
+
+.card h3{
+margin:0;
+}
+
+button{
+padding:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin-top:10px;
+margin-right:5px;
+}
+
+.delete{
+background:#e74c3c;
+color:white;
+}
+
+.exercise{
+background:#43e97b;
+color:black;
+}
+
+.edit{
+background:#f1c40f;
+}
+
+.back{
+margin-top:20px;
+padding:12px;
+width:200px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>All Trainers</h2>
+
+<div class="container" id="trainerList"></div>
+
+<button class="back" onclick="goBack()">Back to Admin</button>
+
+<script>
+
+const firebaseConfig = {
+apiKey: "AIzaSyC7-qD6CyO0lPzZA3JL0O4w9M5Hltprl54",
+authDomain: "newgym-b6b87.firebaseapp.com",
+projectId: "newgym-b6b87",
+storageBucket: "newgym-b6b87.firebasestorage.app",
+messagingSenderId: "760039903820",
+appId: "1:760039903820:web:d29f2c7afbdd6fac6a5ae9"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function loadTrainers(){
+
+db.collection("trainers").get().then((snapshot)=>{
+
+let html="";
+
+snapshot.forEach((doc)=>{
+
+let data=doc.data();
+
+html+=`
+
+<div class="card">
+
+<h3>${data.name}</h3>
+<p><b>Gym:</b> ${data.gymName}</p>
+
+<button class="exercise" onclick="addExercise('${doc.id}')">Add Exercise</button>
+
+<button class="edit" onclick="editTrainer('${doc.id}','${data.name}','${data.gymName}')">Edit</button>
+
+<button class="delete" onclick="deleteTrainer('${doc.id}')">Delete</button>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("trainerList").innerHTML=html;
+
+});
+
+}
+
+loadTrainers();
+
+function deleteTrainer(id){
+
+if(confirm("Delete this trainer?")){
+
+db.collection("trainers").doc(id).delete()
+.then(()=>{
+alert("Trainer Deleted");
+location.reload();
+});
+
+}
+
+}
+
+function editTrainer(id,name,gym){
+
+let newName=prompt("Trainer Name",name);
+let newGym=prompt("Gym Name",gym);
+
+db.collection("trainers").doc(id).update({
+name:newName,
+gymName:newGym
+})
+.then(()=>{
+alert("Trainer Updated");
+location.reload();
+});
+
+}
+
+function addExercise(trainerId){
+
+let title=prompt("Exercise Title");
+let video=prompt("YouTube Video URL");
+
+if(title && video){
+
+db.collection("trainers")
+.doc(trainerId)
+.collection("exercises")
+.add({
+title:title,
+videoUrl:video
+})
+.then(()=>{
+alert("Exercise Added");
+});
+
+}
+
+}
+
+function goBack(){
+window.location.href="index.html";
+}
+
+</script>
+
+</body>
+</html>
