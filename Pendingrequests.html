@@ -1,279 +1,180 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Pending Trainer Requests</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Applications — EliteFit Admin</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
 <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #F7F5FF; min-height: 100vh; color: #1E1B2E; }
 
-* { box-sizing: border-box; }
-
-body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-  color: white;
-  min-height: 100vh;
-  margin: 0;
-  padding: 20px;
+.topbar {
+  background: linear-gradient(135deg, #7C3AED, #5B21B6);
+  padding: 0 28px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(124,58,237,0.3);
 }
-
-h2 {
-  text-align: center;
-  font-size: 24px;
-  margin-bottom: 6px;
+.back-btn {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+  color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px;
+  font-weight: 700; cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; gap: 6px; transition: 0.2s;
 }
-
-.subtitle {
-  text-align: center;
-  color: #aaa;
-  font-size: 14px;
-  margin-bottom: 24px;
+.back-btn:hover { background: rgba(255,255,255,0.25); }
+.topbar-brand { display: flex; align-items: center; gap: 10px; }
+.brand-logo {
+  width: 36px; height: 36px; background: rgba(255,255,255,0.2);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;
 }
+.topbar-brand h1 { color: white; font-size: 15px; font-weight: 900; letter-spacing: 2.5px; }
 
+.main { max-width: 1000px; margin: 0 auto; padding: 32px 24px 60px; }
+
+.page-title { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+.title-icon {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #FF7043, #E64A19);
+  border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; box-shadow: 0 6px 18px rgba(255,112,67,0.3);
+}
+.page-title h2 { font-size: 22px; font-weight: 900; color: #1E1B2E; }
+.page-title p  { font-size: 13px; color: #7C6FAF; margin-top: 2px; }
+
+/* Tabs */
 .tabs {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
+  display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;
 }
 
 .tab {
-  padding: 10px 24px;
-  border-radius: 25px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  transition: 0.3s;
-  opacity: 0.6;
+  padding: 10px 22px; border-radius: 24px; border: 2px solid transparent;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s;
+  background: white; color: #7C6FAF; border-color: #DDD6FE;
 }
 
-.tab.active {
-  opacity: 1;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+.tab:hover { transform: translateY(-1px); }
+
+.tab-pending.active  { background: linear-gradient(135deg, #FF7043, #E64A19); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(255,112,67,0.35); }
+.tab-approved.active { background: linear-gradient(135deg, #059669, #00897B); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(5,150,105,0.35); }
+.tab-rejected.active { background: linear-gradient(135deg, #DC2626, #B91C1C); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(220,38,38,0.35); }
+
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;
 }
 
-.tab-pending { background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a1a; }
-.tab-approved { background: linear-gradient(135deg, #11998e, #38ef7d); color: #1a1a1a; }
-.tab-rejected { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
-
-.container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  max-width: 1100px;
-  margin: 0 auto;
+.req-card {
+  background: white; border-radius: 20px; padding: 22px;
+  border: 1.5px solid #DDD6FE; box-shadow: 0 2px 12px rgba(124,58,237,0.06);
+  transition: 0.2s; position: relative; overflow: hidden;
 }
+.req-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(124,58,237,0.12); }
 
-.card {
-  background: #1c2033;
-  border-radius: 16px;
-  padding: 22px;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-  transition: transform 0.2s;
+.req-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
 }
+.status-pending::before  { background: linear-gradient(90deg, #FF7043, #E64A19); }
+.status-approved::before { background: linear-gradient(90deg, #059669, #38ef7d); }
+.status-rejected::before { background: linear-gradient(90deg, #DC2626, #EF4444); }
 
-.card:hover {
-  transform: translateY(-3px);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
+.card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
 .avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6C5CE7, #00B894);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: bold;
-  flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, #7C3AED, #9F6FF5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: white; flex-shrink: 0;
 }
+.card-header h3 { font-size: 15px; font-weight: 800; color: #1E1B2E; margin-bottom: 2px; }
+.card-header p  { font-size: 12px; color: #7C6FAF; }
 
-.card-header h3 {
-  margin: 0;
-  font-size: 17px;
+.status-pill {
+  display: inline-block; padding: 4px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; margin-bottom: 12px;
 }
-
-.card-header p {
-  margin: 3px 0 0;
-  font-size: 13px;
-  color: #aaa;
-}
+.pill-pending  { background: rgba(255,112,67,0.1); color: #E64A19; border: 1px solid rgba(255,112,67,0.25); }
+.pill-approved { background: rgba(5,150,105,0.1); color: #059669; border: 1px solid rgba(5,150,105,0.25); }
+.pill-rejected { background: rgba(220,38,38,0.1); color: #DC2626; border: 1px solid rgba(220,38,38,0.2); }
 
 .info-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 10px;
-  font-size: 14px;
+  display: flex; gap: 8px; align-items: flex-start;
+  font-size: 12.5px; color: #7C6FAF; margin-bottom: 8px;
 }
-
-.info-row .label {
-  color: #f7971e;
-  font-weight: bold;
-  min-width: 90px;
-  flex-shrink: 0;
-}
-
-.info-row .value {
-  color: #ddd;
-  word-break: break-word;
-}
+.info-row .lbl { font-weight: 700; color: #7C3AED; min-width: 80px; flex-shrink: 0; }
+.info-row .val { color: #1E1B2E; font-weight: 500; }
 
 .bio-box {
-  background: rgba(255,255,255,0.05);
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 13px;
-  color: #ccc;
-  margin: 12px 0;
-  line-height: 1.5;
-  font-style: italic;
+  background: #F7F5FF; border-radius: 10px; padding: 10px 12px;
+  font-size: 12px; color: #7C6FAF; font-style: italic; line-height: 1.5; margin: 10px 0;
+  border-left: 3px solid #DDD6FE;
 }
 
-.date {
-  font-size: 12px;
-  color: #777;
-  margin-bottom: 16px;
-}
+.date { font-size: 11px; color: #9E94CC; margin-bottom: 14px; }
 
-.btn-row {
-  display: flex;
-  gap: 10px;
-}
+.divider { height: 1px; background: #EFEBFF; margin: 12px 0; }
+
+.btn-row { display: flex; gap: 8px; }
 
 .btn {
-  flex: 1;
-  padding: 11px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 14px;
-  transition: 0.2s;
+  flex: 1; padding: 11px; border: none; border-radius: 11px;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s;
 }
+.btn:hover { transform: translateY(-2px); opacity: 0.9; }
+.btn-approve { background: linear-gradient(135deg, #059669, #00897B); color: white; box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+.btn-reject  { background: linear-gradient(135deg, #DC2626, #B91C1C); color: white; box-shadow: 0 4px 12px rgba(220,38,38,0.25); }
+.btn-delete  { background: #F7F5FF; color: #7C6FAF; border: 1.5px solid #DDD6FE; }
 
-.btn:hover {
-  transform: translateY(-2px);
-  opacity: 0.9;
+.loading { text-align: center; padding: 60px; color: #9E94CC; font-size: 15px; grid-column: 1/-1; }
+.spinner {
+  width: 36px; height: 36px; border: 3px solid #EFEBFF; border-top-color: #7C3AED;
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.btn-approve {
-  background: linear-gradient(135deg, #11998e, #38ef7d);
-  color: #1a1a1a;
-}
-
-.btn-reject {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  color: white;
-}
-
-.btn-delete {
-  background: linear-gradient(135deg, #636e72, #2d3436);
-  color: white;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 12px;
-}
-
-.badge-approved { background: rgba(56,239,125,0.2); color: #38ef7d; border: 1px solid #38ef7d; }
-.badge-rejected { background: rgba(231,76,60,0.2); color: #e74c3c; border: 1px solid #e74c3c; }
-.badge-pending { background: rgba(247,151,30,0.2); color: #ffd200; border: 1px solid #ffd200; }
-
-.empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: #777;
-  font-size: 16px;
-  grid-column: 1/-1;
-}
-
-.empty span { font-size: 48px; display: block; margin-bottom: 12px; }
-
-.back-btn {
-  display: block;
-  margin: 30px auto 10px;
-  padding: 12px 30px;
-  background: linear-gradient(135deg, #6C5CE7, #4834D4);
-  color: white;
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: bold;
-  transition: 0.3s;
-  width: fit-content;
-}
-
-.back-btn:hover { transform: translateY(-2px); opacity: 0.9; }
-
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: #aaa;
-  grid-column: 1/-1;
-}
+.empty { text-align: center; padding: 60px; color: #9E94CC; grid-column: 1/-1; }
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
 
 .toast {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #2d3436;
-  color: white;
-  padding: 14px 28px;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: bold;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-  display: none;
-  z-index: 999;
-  border-left: 4px solid #38ef7d;
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  background: #1E1B2E; color: white; padding: 14px 26px; border-radius: 16px;
+  font-size: 14px; font-weight: 600; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  display: none; z-index: 999; border-left: 4px solid #7C3AED; white-space: nowrap;
 }
-
 </style>
 </head>
-
 <body>
 
-<h2>⏳ Trainer Applications</h2>
-<p class="subtitle">Review, approve or reject trainer requests</p>
-
-<div class="tabs">
-  <button class="tab tab-pending active" onclick="switchTab('pending', this)">⏳ Pending</button>
-  <button class="tab tab-approved" onclick="switchTab('approved', this)">✅ Approved</button>
-  <button class="tab tab-rejected" onclick="switchTab('rejected', this)">❌ Rejected</button>
+<div class="topbar">
+  <a class="back-btn" href="index.html">← Dashboard</a>
+  <div class="topbar-brand">
+    <div class="brand-logo">💪</div>
+    <h1>E L I T E F I T</h1>
+  </div>
+  <div style="width:80px"></div>
 </div>
 
-<div class="container" id="requestList">
-  <div class="loading">Loading requests...</div>
-</div>
+<div class="main">
+  <div class="page-title">
+    <div class="title-icon">⏳</div>
+    <div>
+      <h2>Trainer Applications</h2>
+      <p>Review, approve or reject trainer requests</p>
+    </div>
+  </div>
 
-<button class="back-btn" onclick="goBack()">← Back to Dashboard</button>
+  <div class="tabs">
+    <button class="tab tab-pending active" onclick="switchTab('pending', this)">⏳ Pending</button>
+    <button class="tab tab-approved" onclick="switchTab('approved', this)">✅ Approved</button>
+    <button class="tab tab-rejected" onclick="switchTab('rejected', this)">❌ Rejected</button>
+  </div>
+
+  <div class="grid" id="list">
+    <div class="loading"><div class="spinner"></div>Loading...</div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-
 const firebaseConfig = {
   apiKey: "AIzaSyC7-qD6CyO0lPzZA3JL0O4w9M5Hltprl54",
   authDomain: "newgym-b6b87.firebaseapp.com",
@@ -282,199 +183,118 @@ const firebaseConfig = {
   messagingSenderId: "760039903820",
   appId: "1:760039903820:web:d29f2c7afbdd6fac6a5ae9"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let currentTab = "pending";
 
-function showToast(msg, color="#38ef7d"){
+function showToast(msg) {
   const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.borderLeftColor = color;
-  t.style.display = "block";
-  setTimeout(()=>{ t.style.display="none"; }, 3000);
+  t.textContent = msg; t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3000);
 }
 
-function switchTab(status, btn){
+function switchTab(status, btn) {
   currentTab = status;
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   btn.classList.add("active");
   loadRequests(status);
 }
 
-function formatDate(ts){
-  if(!ts) return "Unknown date";
+function getInitials(name) {
+  if (!name) return "?";
+  return name.trim().split(" ").map(n => n[0]).join("").toUpperCase().slice(0,2);
+}
+
+function formatDate(ts) {
+  if (!ts) return "Unknown date";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleDateString("en-US",{ year:"numeric", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-function getInitials(name){
-  if(!name) return "?";
-  return name.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2);
-}
+function loadRequests(status) {
+  const list = document.getElementById("list");
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
 
-function loadRequests(status){
-  const list = document.getElementById("requestList");
-  list.innerHTML = '<div class="loading">Loading...</div>';
+  db.collection("trainerRequests").where("status","==",status).get().then(snap => {
+    if (snap.empty) {
+      const msgs = { pending: "No pending applications 🎉", approved: "No approved trainers yet.", rejected: "No rejected applications." };
+      list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div>${msgs[status]}</div>`;
+      return;
+    }
 
-  db.collection("trainerRequests")
-    .where("status","==", status)
-    .get()
-    .then((snapshot)=>{
-
-      if(snapshot.empty){
-        const labels = { pending:"No pending requests right now 🎉", approved:"No approved trainers yet.", rejected:"No rejected requests." };
-        list.innerHTML = `<div class="empty"><span>📭</span>${labels[status]}</div>`;
-        return;
-      }
-
-      // Sort by submittedAt descending in JS — no Firestore index needed
-      const docs = [];
-      snapshot.forEach(doc => docs.push(doc));
-      docs.sort((a, b) => {
-        const aT = a.data().submittedAt ? a.data().submittedAt.toMillis() : 0;
-        const bT = b.data().submittedAt ? b.data().submittedAt.toMillis() : 0;
-        return bT - aT;
-      });
-
-      let html = "";
-
-      docs.forEach((doc)=>{
-        const d = doc.data();
-        const id = doc.id;
-        const initials = getInitials(d.name);
-        const dateStr = formatDate(d.submittedAt);
-
-        let statusBadge = "";
-        if(status === "approved") statusBadge = `<div class="status-badge badge-approved">✅ Approved</div>`;
-        if(status === "rejected") statusBadge = `<div class="status-badge badge-rejected">❌ Rejected</div>`;
-        if(status === "pending")  statusBadge = `<div class="status-badge badge-pending">⏳ Pending Review</div>`;
-
-        let actionButtons = "";
-        if(status === "pending"){
-          actionButtons = `
-            <div class="btn-row">
-              <button class="btn btn-approve" onclick="approveRequest('${id}', '${(d.name||"").replace(/'/g,"\\'")}', '${(d.gymName||"").replace(/'/g,"\\'")}', '${(d.email||"").replace(/'/g,"\\'")}')">✅ Approve</button>
-              <button class="btn btn-reject" onclick="rejectRequest('${id}')">❌ Reject</button>
-            </div>`;
-        } else {
-          actionButtons = `
-            <div class="btn-row">
-              <button class="btn btn-delete" onclick="deleteRequest('${id}')">🗑 Delete</button>
-            </div>`;
-        }
-
-        html += `
-          <div class="card" id="card-${id}">
-            <div class="card-header">
-              <div class="avatar">${initials}</div>
-              <div>
-                <h3>${d.name || "Unknown"}</h3>
-                <p>${d.email || ""}</p>
-              </div>
-            </div>
-
-            ${statusBadge}
-
-            <div class="info-row">
-              <span class="label">📞 Phone</span>
-              <span class="value">${d.phone || "N/A"}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">🏋️ Gym</span>
-              <span class="value">${d.gymName || "N/A"}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">🎓 Cert.</span>
-              <span class="value">${d.certification || "N/A"}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">⏱ Exp.</span>
-              <span class="value">${d.experience || "N/A"}</span>
-            </div>
-
-            ${d.bio ? `<div class="bio-box">"${d.bio}"</div>` : ""}
-
-            <div class="date">📅 Submitted: ${dateStr}</div>
-
-            ${actionButtons}
-          </div>
-        `;
-      });
-
-      list.innerHTML = html;
-    })
-    .catch((err)=>{
-      console.error(err);
-      list.innerHTML = `<div class="empty"><span>⚠️</span>Error loading requests.<br>Check your Firestore security rules — make sure read access is allowed for trainerRequests.</div>`;
+    const docs = snap.docs.sort((a,b) => {
+      const aT = a.data().submittedAt?.toMillis?.() || 0;
+      const bT = b.data().submittedAt?.toMillis?.() || 0;
+      return bT - aT;
     });
-}
 
-function approveRequest(id, name, gym, email){
-  if(!confirm(`Approve ${name} as a trainer?`)) return;
+    const pillClass = { pending: "pill-pending", approved: "pill-approved", rejected: "pill-rejected" };
+    const pillText  = { pending: "⏳ Pending Review", approved: "✅ Approved", rejected: "❌ Rejected" };
 
-  // 1. Add to trainers collection
-  db.collection("trainers").add({
-    name: name,
-    gymName: gym || "",
-    email: email || "",
-    approvedAt: new Date(),
-    createdAt: new Date()
-  }).then(()=>{
-    // 2. Update request status
-    return db.collection("trainerRequests").doc(id).update({ status: "approved" });
-  }).then(()=>{
-    showToast("✅ Trainer approved and added!", "#38ef7d");
-    document.getElementById("card-"+id).remove();
-    checkEmpty();
-  }).catch((err)=>{
-    console.error(err);
-    showToast("❌ Error approving trainer.", "#e74c3c");
+    list.innerHTML = docs.map(doc => {
+      const d = doc.data(), id = doc.id;
+      const actions = status === "pending"
+        ? `<button class="btn btn-approve" onclick="approve('${id}','${(d.name||"").replace(/'/g,"\\'")}','${(d.gymName||"").replace(/'/g,"\\'")}','${(d.email||"").replace(/'/g,"\\'")}')">✅ Approve</button>
+           <button class="btn btn-reject"  onclick="reject('${id}')">❌ Reject</button>`
+        : `<button class="btn btn-delete"  onclick="deleteReq('${id}')">🗑 Delete</button>`;
+
+      return `
+        <div class="req-card status-${status}" id="card-${id}">
+          <div class="card-header">
+            <div class="avatar">${getInitials(d.name)}</div>
+            <div>
+              <h3>${d.name || "Unknown"}</h3>
+              <p>${d.email || ""}</p>
+            </div>
+          </div>
+          <div class="status-pill ${pillClass[status]}">${pillText[status]}</div>
+          <div class="info-row"><span class="lbl">📞 Phone</span><span class="val">${d.phone || "N/A"}</span></div>
+          <div class="info-row"><span class="lbl">🏋️ Gym</span><span class="val">${d.gymName || "N/A"}</span></div>
+          <div class="info-row"><span class="lbl">🎓 Cert.</span><span class="val">${d.certification || "N/A"}</span></div>
+          <div class="info-row"><span class="lbl">⏱ Exp.</span><span class="val">${d.experience ? d.experience + " yrs" : "N/A"}</span></div>
+          ${d.bio ? `<div class="bio-box">"${d.bio}"</div>` : ""}
+          <div class="date">📅 ${formatDate(d.submittedAt)}</div>
+          <div class="divider"></div>
+          <div class="btn-row">${actions}</div>
+        </div>`;
+    }).join("");
+  }).catch(err => {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>Error loading. Check Firestore rules.</div>`;
   });
 }
 
-function rejectRequest(id){
-  if(!confirm("Reject this trainer application?")) return;
+function approve(id, name, gym, email) {
+  if (!confirm(`Approve ${name} as a trainer?`)) return;
+  db.collection("trainers").add({ name, gymName: gym || "", email: email || "", approvedAt: new Date(), createdAt: new Date() })
+    .then(() => db.collection("trainerRequests").doc(id).update({ status: "approved" }))
+    .then(() => {
+      showToast("✅ Trainer approved!");
+      document.getElementById("card-"+id).remove();
+      checkEmpty();
+    }).catch(() => showToast("❌ Error approving"));
+}
 
+function reject(id) {
+  if (!confirm("Reject this application?")) return;
   db.collection("trainerRequests").doc(id).update({ status: "rejected" })
-    .then(()=>{
-      showToast("Request rejected.", "#e74c3c");
-      document.getElementById("card-"+id).remove();
-      checkEmpty();
-    })
-    .catch((err)=>{
-      console.error(err);
-      showToast("Error rejecting request.", "#e74c3c");
-    });
+    .then(() => { showToast("Application rejected."); document.getElementById("card-"+id).remove(); checkEmpty(); });
 }
 
-function deleteRequest(id){
-  if(!confirm("Permanently delete this request?")) return;
-
+function deleteReq(id) {
+  if (!confirm("Permanently delete this request?")) return;
   db.collection("trainerRequests").doc(id).delete()
-    .then(()=>{
-      showToast("Request deleted.", "#636e72");
-      document.getElementById("card-"+id).remove();
-      checkEmpty();
-    });
+    .then(() => { showToast("Deleted."); document.getElementById("card-"+id).remove(); checkEmpty(); });
 }
 
-function checkEmpty(){
-  const list = document.getElementById("requestList");
-  if(list.querySelectorAll(".card").length === 0){
-    list.innerHTML = `<div class="empty"><span>📭</span>No requests here.</div>`;
+function checkEmpty() {
+  const list = document.getElementById("list");
+  if (!list.querySelector(".req-card")) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div>No requests here.</div>`;
   }
 }
 
-function goBack(){
-  window.location.href = "index.html";
-}
-
-// Load pending on start
 loadRequests("pending");
-
 </script>
-
 </body>
 </html>

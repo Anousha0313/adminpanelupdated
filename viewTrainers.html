@@ -1,185 +1,317 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Trainers</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trainers — EliteFit Admin</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
 <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #F7F5FF; min-height: 100vh; color: #1E1B2E; }
 
-body{
-font-family:Arial;
-background:#1a1a2e;
-color:white;
-padding:20px;
+.topbar {
+  background: linear-gradient(135deg, #7C3AED, #5B21B6);
+  padding: 0 28px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+}
+.back-btn {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+  color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px;
+  font-weight: 700; cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; gap: 6px; transition: 0.2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.25); }
+.topbar-brand { display: flex; align-items: center; gap: 10px; }
+.brand-logo {
+  width: 36px; height: 36px; background: rgba(255,255,255,0.2);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.topbar-brand h1 { color: white; font-size: 15px; font-weight: 900; letter-spacing: 2.5px; }
+
+.main { max-width: 900px; margin: 0 auto; padding: 32px 24px 60px; }
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+}
+.page-title { display: flex; align-items: center; gap: 14px; }
+.title-icon {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #00BCD4, #0097A7);
+  border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; box-shadow: 0 6px 18px rgba(0,188,212,0.3);
+}
+.page-title h2 { font-size: 22px; font-weight: 900; color: #1E1B2E; }
+.page-title p  { font-size: 13px; color: #7C6FAF; margin-top: 2px; }
+.count-badge {
+  background: rgba(0,188,212,0.1); color: #0097A7;
+  border: 1px solid rgba(0,188,212,0.2); border-radius: 20px;
+  padding: 6px 16px; font-size: 13px; font-weight: 700;
 }
 
-.container{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:20px;
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px;
 }
 
-.card{
-background:#2A2A3E;
-padding:20px;
-border-radius:12px;
+.trainer-card {
+  background: white; border-radius: 20px; padding: 22px;
+  border: 1.5px solid #DDD6FE; box-shadow: 0 2px 12px rgba(124,58,237,0.06);
+  transition: 0.2s; position: relative; overflow: hidden;
+}
+.trainer-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, #00BCD4, #0097A7);
+}
+.trainer-card:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(0,188,212,0.14); border-color: #A5F3FC; }
+
+.trainer-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.avatar {
+  width: 50px; height: 50px; border-radius: 14px;
+  background: linear-gradient(135deg, #00BCD4, #0097A7);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800; color: white; flex-shrink: 0;
+}
+.trainer-header h3 { font-size: 16px; font-weight: 800; color: #1E1B2E; margin-bottom: 3px; }
+.trainer-header p  { font-size: 12.5px; color: #7C6FAF; }
+
+.divider { height: 1px; background: #EFEBFF; margin: 14px 0; }
+
+.action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn {
+  padding: 9px 16px; border: none; border-radius: 10px;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;
+}
+.btn:hover { transform: translateY(-1px); opacity: 0.9; }
+
+.btn-ex    { background: rgba(5,150,105,0.12); color: #059669; border: 1px solid rgba(5,150,105,0.2); }
+.btn-edit  { background: rgba(245,158,11,0.12); color: #D97706; border: 1px solid rgba(245,158,11,0.2); }
+.btn-del   { background: rgba(220,38,38,0.1); color: #DC2626; border: 1px solid rgba(220,38,38,0.15); }
+
+/* Modal */
+.modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(30,27,46,0.55); backdrop-filter: blur(6px);
+  z-index: 100; align-items: center; justify-content: center;
+}
+.modal.show { display: flex; }
+.modal-box {
+  background: white; border-radius: 24px; padding: 28px; width: 360px; max-width: 95vw;
+  box-shadow: 0 24px 60px rgba(124,58,237,0.2); border: 1.5px solid #DDD6FE;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.modal-icon {
+  width: 42px; height: 42px; background: rgba(124,58,237,0.1);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.modal-header h3 { font-size: 17px; color: #1E1B2E; font-weight: 900; }
+.field-group { margin-bottom: 14px; }
+.field-label { font-size: 11px; font-weight: 700; color: #9E94CC; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+input {
+  width: 100%; padding: 13px 16px; border: 1.5px solid #DDD6FE; border-radius: 12px;
+  font-size: 14px; color: #1E1B2E; outline: none; transition: 0.2s; background: #F7F5FF; font-family: inherit;
+}
+input:focus { border-color: #7C3AED; background: white; box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.btn-primary {
+  flex: 1; padding: 13px; background: linear-gradient(135deg, #7C3AED, #5B21B6);
+  color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 800;
+  cursor: pointer; transition: 0.2s;
+}
+.btn-primary:hover { opacity: 0.92; }
+.btn-cancel {
+  padding: 13px 20px; background: #F7F5FF; color: #7C6FAF;
+  border: 1.5px solid #DDD6FE; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer;
 }
 
-.card h3{
-margin:0;
+.loading { text-align: center; padding: 60px; color: #9E94CC; font-size: 15px; grid-column: 1/-1; }
+.spinner {
+  width: 36px; height: 36px; border: 3px solid #EFEBFF; border-top-color: #7C3AED;
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { text-align: center; padding: 60px; color: #9E94CC; grid-column: 1/-1; }
 
-button{
-padding:10px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-margin-top:10px;
-margin-right:5px;
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  background: #1E1B2E; color: white; padding: 14px 26px; border-radius: 16px;
+  font-size: 14px; font-weight: 600; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  display: none; z-index: 999; border-left: 4px solid #7C3AED;
 }
-
-.delete{
-background:#e74c3c;
-color:white;
-}
-
-.exercise{
-background:#43e97b;
-color:black;
-}
-
-.edit{
-background:#f1c40f;
-}
-
-.back{
-margin-top:20px;
-padding:12px;
-width:200px;
-}
-
 </style>
-
 </head>
-
 <body>
 
-<h2>All Trainers</h2>
+<div class="topbar">
+  <a class="back-btn" href="index.html">← Dashboard</a>
+  <div class="topbar-brand">
+    <div class="brand-logo">💪</div>
+    <h1>E L I T E F I T</h1>
+  </div>
+  <div style="width:80px"></div>
+</div>
 
-<div class="container" id="trainerList"></div>
+<div class="main">
+  <div class="page-header">
+    <div class="page-title">
+      <div class="title-icon">🏅</div>
+      <div>
+        <h2>Active Trainers</h2>
+        <p>Manage certified trainers</p>
+      </div>
+    </div>
+    <div class="count-badge" id="countBadge">Loading...</div>
+  </div>
 
-<button class="back" onclick="goBack()">Back to Admin</button>
+  <div class="grid" id="trainerList">
+    <div class="loading"><div class="spinner"></div>Loading trainers...</div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal" id="editModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-icon">✏️</div>
+      <h3>Edit Trainer</h3>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Trainer Name</label>
+      <input id="editName" placeholder="Trainer Name">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Gym Name</label>
+      <input id="editGym" placeholder="Gym Name">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
+      <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exercise Modal -->
+<div class="modal" id="exModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-icon">🏋️</div>
+      <h3>Add Exercise</h3>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Exercise Title</label>
+      <input id="exTitle" placeholder="e.g. Push-Up Basics">
+    </div>
+    <div class="field-group">
+      <label class="field-label">YouTube Video URL</label>
+      <input id="exUrl" placeholder="https://youtube.com/...">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="saveExercise()">Add Exercise</button>
+      <button class="btn-cancel" onclick="closeEx()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-
 const firebaseConfig = {
-apiKey: "AIzaSyC7-qD6CyO0lPzZA3JL0O4w9M5Hltprl54",
-authDomain: "newgym-b6b87.firebaseapp.com",
-projectId: "newgym-b6b87",
-storageBucket: "newgym-b6b87.firebasestorage.app",
-messagingSenderId: "760039903820",
-appId: "1:760039903820:web:d29f2c7afbdd6fac6a5ae9"
+  apiKey: "AIzaSyC7-qD6CyO0lPzZA3JL0O4w9M5Hltprl54",
+  authDomain: "newgym-b6b87.firebaseapp.com",
+  projectId: "newgym-b6b87",
+  storageBucket: "newgym-b6b87.firebasestorage.app",
+  messagingSenderId: "760039903820",
+  appId: "1:760039903820:web:d29f2c7afbdd6fac6a5ae9"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-function loadTrainers(){
+let editId = "", exId = "";
 
-db.collection("trainers").get().then((snapshot)=>{
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3000);
+}
 
-let html="";
+function getInitials(name) {
+  if (!name) return "?";
+  return name.trim().split(" ").map(n => n[0]).join("").toUpperCase().slice(0,2);
+}
 
-snapshot.forEach((doc)=>{
-
-let data=doc.data();
-
-html+=`
-
-<div class="card">
-
-<h3>${data.name}</h3>
-<p><b>Gym:</b> ${data.gymName}</p>
-
-<button class="exercise" onclick="addExercise('${doc.id}')">Add Exercise</button>
-
-<button class="edit" onclick="editTrainer('${doc.id}','${data.name}','${data.gymName}')">Edit</button>
-
-<button class="delete" onclick="deleteTrainer('${doc.id}')">Delete</button>
-
-</div>
-
-`;
-
-});
-
-document.getElementById("trainerList").innerHTML=html;
-
-});
-
+function loadTrainers() {
+  db.collection("trainers").get().then(snap => {
+    document.getElementById("countBadge").textContent = `${snap.size} Trainers`;
+    if (snap.empty) {
+      document.getElementById("trainerList").innerHTML = `<div class="empty">No trainers yet.</div>`;
+      return;
+    }
+    document.getElementById("trainerList").innerHTML = snap.docs.map(doc => {
+      const d = doc.data();
+      return `
+        <div class="trainer-card">
+          <div class="trainer-header">
+            <div class="avatar">${getInitials(d.name)}</div>
+            <div>
+              <h3>${d.name || "Unknown"}</h3>
+              <p>🏋️ ${d.gymName || "No gym"}</p>
+              ${d.email ? `<p>📧 ${d.email}</p>` : ""}
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="action-row">
+            <button class="btn btn-ex" onclick="openEx('${doc.id}')">➕ Exercise</button>
+            <button class="btn btn-edit" onclick="openEdit('${doc.id}','${(d.name||"").replace(/'/g,"\\'")}','${(d.gymName||"").replace(/'/g,"\\'")}')">✏️ Edit</button>
+            <button class="btn btn-del" onclick="deleteTrainer('${doc.id}')">🗑 Delete</button>
+          </div>
+        </div>`;
+    }).join("");
+  });
 }
 
 loadTrainers();
 
-function deleteTrainer(id){
+function openEdit(id, name, gym) {
+  editId = id;
+  document.getElementById("editName").value = name;
+  document.getElementById("editGym").value = gym;
+  document.getElementById("editModal").classList.add("show");
+}
+function closeEdit() { document.getElementById("editModal").classList.remove("show"); }
 
-if(confirm("Delete this trainer?")){
-
-db.collection("trainers").doc(id).delete()
-.then(()=>{
-alert("Trainer Deleted");
-location.reload();
-});
-
+function saveEdit() {
+  const name = document.getElementById("editName").value.trim();
+  const gym  = document.getElementById("editGym").value.trim();
+  if (!name) { showToast("⚠️ Name is required"); return; }
+  db.collection("trainers").doc(editId).update({ name, gymName: gym })
+    .then(() => { showToast("✅ Trainer updated!"); closeEdit(); loadTrainers(); });
 }
 
+function openEx(id) {
+  exId = id;
+  document.getElementById("exTitle").value = "";
+  document.getElementById("exUrl").value = "";
+  document.getElementById("exModal").classList.add("show");
+}
+function closeEx() { document.getElementById("exModal").classList.remove("show"); }
+
+function saveExercise() {
+  const title = document.getElementById("exTitle").value.trim();
+  const url   = document.getElementById("exUrl").value.trim();
+  if (!title || !url) { showToast("⚠️ Fill both fields"); return; }
+  db.collection("trainers").doc(exId).collection("exercises").add({ title, videoUrl: url })
+    .then(() => { showToast("✅ Exercise added!"); closeEx(); });
 }
 
-function editTrainer(id,name,gym){
-
-let newName=prompt("Trainer Name",name);
-let newGym=prompt("Gym Name",gym);
-
-db.collection("trainers").doc(id).update({
-name:newName,
-gymName:newGym
-})
-.then(()=>{
-alert("Trainer Updated");
-location.reload();
-});
-
+function deleteTrainer(id) {
+  if (!confirm("Delete this trainer permanently?")) return;
+  db.collection("trainers").doc(id).delete()
+    .then(() => { showToast("🗑 Trainer deleted"); loadTrainers(); });
 }
-
-function addExercise(trainerId){
-
-let title=prompt("Exercise Title");
-let video=prompt("YouTube Video URL");
-
-if(title && video){
-
-db.collection("trainers")
-.doc(trainerId)
-.collection("exercises")
-.add({
-title:title,
-videoUrl:video
-})
-.then(()=>{
-alert("Exercise Added");
-});
-
-}
-
-}
-
-function goBack(){
-window.location.href="index.html";
-}
-
 </script>
-
 </body>
 </html>

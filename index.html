@@ -1,156 +1,604 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Admin Dashboard</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EliteFit Admin</title>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
 <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-body{
-font-family: Arial;
-margin:0;
-background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-color:white;
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #F7F5FF;
+  min-height: 100vh;
+  color: #1E1B2E;
 }
 
-.header{
-padding:25px;
-font-size:26px;
-font-weight:bold;
-text-align:center;
+/* ── Top Bar ── */
+.topbar {
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+  padding: 0 32px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 24px rgba(124,58,237,0.35);
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
-.badge{
-display:inline-block;
-background:#e74c3c;
-color:white;
-border-radius:50%;
-padding:2px 8px;
-font-size:13px;
-font-weight:bold;
-margin-left:8px;
-vertical-align:middle;
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.container{
-background:#1c1f2b;
-border-radius:30px 30px 0 0;
-padding:40px;
-min-height:100vh;
-box-shadow:0 -10px 30px rgba(0,0,0,0.4);
+.brand-logo {
+  width: 42px; height: 42px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  border: 1px solid rgba(255,255,255,0.3);
 }
 
-button{
-width:100%;
-padding:16px;
-margin-top:20px;
-font-size:16px;
-border:none;
-border-radius:12px;
-color:white;
-cursor:pointer;
-font-weight:bold;
-transition:0.3s;
+.brand-text h1 {
+  color: white;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 3px;
 }
 
-button:hover{
-transform:translateY(-2px);
-opacity:0.9;
+.brand-text p {
+  color: rgba(255,255,255,0.65);
+  font-size: 11px;
+  margin-top: 1px;
 }
 
-.users{
-background:linear-gradient(135deg,#36d1dc,#5b86e5);
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.trainers{
-background:linear-gradient(135deg,#11998e,#38ef7d);
+.app-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  color: white;
+  padding: 8px 18px;
+  border-radius: 22px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.add{
-background:linear-gradient(135deg,#ff7e5f,#feb47b);
+.app-btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
 }
 
-.pending{
-background:linear-gradient(135deg,#f7971e,#ffd200);
-color:#1a1a1a;
+.admin-pill {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.9);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-input{
-width:100%;
-padding:12px;
-margin-top:10px;
-border-radius:8px;
-border:none;
-outline:none;
-box-sizing:border-box;
+/* ── Main ── */
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 36px 28px 60px;
 }
 
-.modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.7);
-z-index:10;
+/* ── Hero ── */
+.hero {
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+  border-radius: 24px;
+  padding: 32px 36px;
+  margin-bottom: 32px;
+  box-shadow: 0 12px 40px rgba(124,58,237,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
-.modal-content{
-background:#242736;
-padding:25px;
-margin:10% auto;
-width:320px;
-border-radius:12px;
-box-shadow:0 10px 30px rgba(0,0,0,0.5);
+.hero-text h2 {
+  color: white;
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 6px;
 }
 
-.modal-content h3{
-margin-top:0;
-text-align:center;
+.hero-text p {
+  color: rgba(255,255,255,0.75);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
+.hero-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-box {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  padding: 16px 22px;
+  text-align: center;
+  min-width: 90px;
+}
+
+.stat-box .num {
+  color: white;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.stat-box .lbl {
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* ── Section label ── */
+.section-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #9E94CC;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* ── Nav grid ── */
+.nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.nav-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1.5px solid #DDD6FE;
+  cursor: pointer;
+  transition: all 0.22s;
+  box-shadow: 0 2px 14px rgba(124,58,237,0.06);
+  text-decoration: none;
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  opacity: 0;
+  transition: 0.22s;
+}
+
+.nav-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(124,58,237,0.15); border-color: #C4B5FD; }
+.nav-card:hover::before { opacity: 1; }
+
+.nc-purple::before { background: linear-gradient(90deg, #7C3AED, #9F6FF5); }
+.nc-teal::before   { background: linear-gradient(90deg, #00BCD4, #0097A7); }
+.nc-orange::before { background: linear-gradient(90deg, #FF7043, #E64A19); }
+.nc-green::before  { background: linear-gradient(90deg, #059669, #00897B); }
+
+.nc-icon {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.bg-purple { background: rgba(124,58,237,0.1); }
+.bg-teal   { background: rgba(0,188,212,0.1); }
+.bg-orange { background: rgba(255,112,67,0.1); }
+.bg-green  { background: rgba(5,150,105,0.1); }
+
+.nav-card h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1E1B2E;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-card p { font-size: 12.5px; color: #7C6FAF; line-height: 1.5; }
+
+.pending-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #DC2626;
+  color: white;
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.arrow {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 32px; height: 32px;
+  background: #F7F5FF;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #7C6FAF;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.nav-card:hover .arrow { background: #7C3AED; color: white; }
+
+/* ── Action card ── */
+.action-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1.5px solid #DDD6FE;
+  box-shadow: 0 2px 14px rgba(124,58,237,0.06);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.action-info { display: flex; align-items: center; gap: 16px; }
+
+.action-icon {
+  width: 52px; height: 52px;
+  background: rgba(124,58,237,0.1);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.action-info h3 { font-size: 15px; font-weight: 800; color: #1E1B2E; margin-bottom: 3px; }
+.action-info p { font-size: 12.5px; color: #7C6FAF; }
+
+.add-btn {
+  padding: 13px 28px;
+  background: linear-gradient(135deg, #7C3AED, #5B21B6);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+  white-space: nowrap;
+}
+
+.add-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124,58,237,0.4); }
+
+/* ── Go to App Banner ── */
+.app-banner {
+  background: linear-gradient(135deg, #1E1B2E 0%, #2D1B69 100%);
+  border-radius: 20px;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+  border: 1px solid rgba(124,58,237,0.3);
+}
+
+.app-banner-text h3 { color: white; font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+.app-banner-text p { color: rgba(255,255,255,0.6); font-size: 13px; }
+
+.go-app-btn {
+  background: linear-gradient(135deg, #9F6FF5, #7C3AED);
+  color: white;
+  border: none;
+  padding: 14px 30px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 6px 20px rgba(124,58,237,0.4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.go-app-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124,58,237,0.5); }
+
+/* ── Modal ── */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(30,27,46,0.55);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show { display: flex; }
+
+.modal-box {
+  background: white;
+  border-radius: 24px;
+  padding: 30px;
+  width: 380px;
+  max-width: 95vw;
+  box-shadow: 0 24px 60px rgba(124,58,237,0.2);
+  border: 1.5px solid #DDD6FE;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.modal-icon {
+  width: 44px; height: 44px;
+  background: rgba(124,58,237,0.1);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+
+.modal-header h3 { font-size: 18px; color: #1E1B2E; font-weight: 900; }
+
+.field-group { margin-bottom: 14px; }
+
+.field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9E94CC;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: block;
+}
+
+input {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1.5px solid #DDD6FE;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #1E1B2E;
+  outline: none;
+  transition: 0.2s;
+  background: #F7F5FF;
+  font-family: inherit;
+}
+
+input:focus { border-color: #7C3AED; background: white; box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+
+.modal-btns { display: flex; gap: 10px; margin-top: 22px; }
+
+.btn-primary {
+  flex: 1;
+  padding: 14px;
+  background: linear-gradient(135deg, #7C3AED, #5B21B6);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.3);
+}
+
+.btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+
+.btn-cancel {
+  padding: 14px 20px;
+  background: #F7F5FF;
+  color: #7C6FAF;
+  border: 1.5px solid #DDD6FE;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-cancel:hover { background: #EFEBFF; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1E1B2E;
+  color: white;
+  padding: 14px 26px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  display: none;
+  z-index: 999;
+  border-left: 4px solid #7C3AED;
+  white-space: nowrap;
+}
 </style>
 </head>
-
 <body>
 
-<div class="header">
-  Admin Dashboard
-</div>
-
-<div class="container">
-
-  <button class="users" onclick="viewUsers()">View Users</button>
-
-  <button class="trainers" onclick="viewTrainers()">View Trainers</button>
-
-  <button class="pending" onclick="viewPending()">
-    Pending Trainer Requests <span class="badge" id="pendingCount">0</span>
-  </button>
-
-  <button class="add" onclick="openModal()"> Add Trainer Manually</button>
-
-</div>
-
-<!-- Add Trainer Modal -->
-<div class="modal" id="trainerModal">
-  <div class="modal-content">
-    <h3>Add Trainer</h3>
-    <input id="name" placeholder="Trainer Name">
-    <input id="gym" placeholder="Gym Name">
-    <input id="videoTitle" placeholder="Exercise Title">
-    <input id="videoUrl" placeholder="YouTube Video URL">
-    <br><br>
-    <button onclick="addTrainer()">Add Trainer</button>
-    <button onclick="closeModal()">Cancel</button>
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-logo">💪</div>
+    <div class="brand-text">
+      <h1>E L I T E F I T</h1>
+      <p>Admin Control Panel</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <a class="app-btn" href="modeSelection.html">📱 Go to App</a>
+    <div class="admin-pill">👤 Admin</div>
   </div>
 </div>
 
-<script>
+<!-- Main -->
+<div class="main">
 
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-text">
+      <h2>Welcome back, Admin! 👋</h2>
+      <p>Manage trainers, users and applications<br>all from one place.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-box">
+        <div class="num" id="userCount">—</div>
+        <div class="lbl">Users</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="trainerCount">—</div>
+        <div class="lbl">Trainers</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="pendingNum">—</div>
+        <div class="lbl">Pending</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <p class="section-label">Manage</p>
+  <div class="nav-grid">
+
+    <a class="nav-card nc-purple" href="viewUsers.html">
+      <div class="nc-icon bg-purple">👥</div>
+      <h3>Users</h3>
+      <p>View all registered members and their details</p>
+      <div class="arrow">→</div>
+    </a>
+
+    <a class="nav-card nc-teal" href="viewTrainers.html">
+      <div class="nc-icon bg-teal">🏅</div>
+      <h3>Trainers</h3>
+      <p>Manage active trainers and their exercises</p>
+      <div class="arrow">→</div>
+    </a>
+
+    <a class="nav-card nc-orange" href="Pendingrequests.html">
+      <div class="nc-icon bg-orange">⏳</div>
+      <h3>
+        Applications
+        <span class="pending-dot" id="pendingBadge" style="display:none">0</span>
+      </h3>
+      <p>Review and approve trainer applications</p>
+      <div class="arrow">→</div>
+    </a>
+
+  </div>
+
+  <!-- Add Trainer -->
+  <p class="section-label">Actions</p>
+  <div class="action-card">
+    <div class="action-info">
+      <div class="action-icon">➕</div>
+      <div>
+        <h3>Add Trainer Manually</h3>
+        <p>Directly add a verified trainer without an application</p>
+      </div>
+    </div>
+    <button class="add-btn" onclick="openModal()">Add Trainer</button>
+  </div>
+
+  <!-- Go to App Banner -->
+  <div class="app-banner">
+    <div class="app-banner-text">
+      <h3>📱 Open EliteFit App</h3>
+      <p>Switch to the user-facing app to see the trainee experience</p>
+    </div>
+    <button class="go-app-btn" onclick="window.location.href='modeSelection.html'">
+      🚀 Launch App
+    </button>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-icon">🏅</div>
+      <h3>Add New Trainer</h3>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Trainer Name *</label>
+      <input id="name" placeholder="e.g. Ahmed Khan">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Gym Name *</label>
+      <input id="gym" placeholder="e.g. FitZone Gym">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Exercise Title (optional)</label>
+      <input id="videoTitle" placeholder="e.g. Push-Up Basics">
+    </div>
+    <div class="field-group">
+      <label class="field-label">YouTube Video URL (optional)</label>
+      <input id="videoUrl" placeholder="https://youtube.com/...">
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="addTrainer()">✅ Add Trainer</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyC7-qD6CyO0lPzZA3JL0O4w9M5Hltprl54",
   authDomain: "newgym-b6b87.firebaseapp.com",
@@ -159,72 +607,49 @@ const firebaseConfig = {
   messagingSenderId: "760039903820",
   appId: "1:760039903820:web:d29f2c7afbdd6fac6a5ae9"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Load pending count badge
-function loadPendingCount(){
-  db.collection("trainerRequests").where("status","==","pending").get().then((snap)=>{
-    const count = snap.size;
-    const badge = document.getElementById("pendingCount");
-    badge.textContent = count;
-    badge.style.display = count > 0 ? "inline-block" : "none";
-  });
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3000);
 }
 
-loadPendingCount();
-
-function openModal(){
-  document.getElementById("trainerModal").style.display="block";
-}
-
-function closeModal(){
-  document.getElementById("trainerModal").style.display="none";
-}
-
-function addTrainer(){
-  let name=document.getElementById("name").value;
-  let gym=document.getElementById("gym").value;
-  let videoTitle=document.getElementById("videoTitle").value;
-  let videoUrl=document.getElementById("videoUrl").value;
-
-  if(name=="" || gym==""){
-    alert("Please fill trainer details");
-    return;
+// Load stats
+db.collection("users").get().then(s => document.getElementById("userCount").textContent = s.size);
+db.collection("trainers").get().then(s => document.getElementById("trainerCount").textContent = s.size);
+db.collection("trainerRequests").where("status","==","pending").get().then(s => {
+  document.getElementById("pendingNum").textContent = s.size;
+  if (s.size > 0) {
+    const b = document.getElementById("pendingBadge");
+    b.textContent = s.size;
+    b.style.display = "inline-flex";
   }
+});
 
-  db.collection("trainers").add({
-    name:name,
-    gymName:gym,
-    createdAt:new Date()
-  }).then((docRef)=>{
-    if(videoTitle!="" && videoUrl!=""){
-      db.collection("trainers").doc(docRef.id).collection("exercises").add({
-        title:videoTitle,
-        videoUrl:videoUrl
-      });
-    }
-    alert("Trainer Added Successfully");
-    closeModal();
-  }).catch((error)=>{
-    console.error("Error:", error);
-  });
+function openModal()  { document.getElementById("modal").classList.add("show"); }
+function closeModal() { document.getElementById("modal").classList.remove("show"); }
+
+function addTrainer() {
+  const name  = document.getElementById("name").value.trim();
+  const gym   = document.getElementById("gym").value.trim();
+  const title = document.getElementById("videoTitle").value.trim();
+  const url   = document.getElementById("videoUrl").value.trim();
+
+  if (!name || !gym) { showToast("⚠️ Please fill trainer name and gym"); return; }
+
+  db.collection("trainers").add({ name, gymName: gym, createdAt: new Date() })
+    .then(ref => {
+      if (title && url) {
+        db.collection("trainers").doc(ref.id).collection("exercises").add({ title, videoUrl: url });
+      }
+      showToast("✅ Trainer added successfully!");
+      closeModal();
+      ["name","gym","videoTitle","videoUrl"].forEach(id => document.getElementById(id).value = "");
+    }).catch(() => showToast("❌ Error adding trainer"));
 }
-
-function viewUsers(){
-  window.location.href="viewUsers.html";
-}
-
-function viewTrainers(){
-  window.location.href="viewTrainers.html";
-}
-
-function viewPending(){
-  window.location.href="Pendingrequests.html";
-}
-
 </script>
-
 </body>
 </html>
